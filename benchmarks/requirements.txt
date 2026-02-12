@@ -1,0 +1,10 @@
+# Benchmark dependencies
+numpy>=1.20.0
+pillow>=9.0.0
+matplotlib>=3.5.0
+scikit-image>=0.19.0
+scipy>=1.7.0
+torch>=1.10.0
+torchvision>=0.11.0
+lpips>=0.1.4
+psutil>=5.8.0
