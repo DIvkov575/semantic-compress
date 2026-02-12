@@ -406,30 +406,28 @@ class BenchmarkRunner:
             # Warmup
             compressor = SemanticCompressor(
                 energy_function=energy_fn,
-                target_ratio=target_ratio,
-                max_iterations=50
             )
-            _ = compressor.compress(image)
+            _ = compressor.compress(image, scale=np.sqrt(target_ratio), method="seam_carving")
             
             # Measure memory
             mem_before = self._measure_memory()
             
             # Measure timing
             start = time.perf_counter()
-            result = compressor.compress(image)
+            result = compressor.compress(image, scale=np.sqrt(target_ratio), method="seam_carving")
             total_time = (time.perf_counter() - start) * 1000  # ms
             
             peak_memory = self._measure_memory() - mem_before
             
             # Compute actual compression ratio
             original_pixels = image.shape[0] * image.shape[1]
-            compressed_pixels = result.compressed_image.shape[0] * result.compressed_image.shape[1]
-            actual_ratio = compressed_pixels / original_pixels
+            compressed_pixels = result.compressed_size[0] * result.compressed_size[1]
+            actual_ratio = result.compression_ratio
             pixels_removed = original_pixels - compressed_pixels
             pixels_removed_pct = (pixels_removed / original_pixels) * 100
             
             # Compute accuracy metrics
-            metrics = self.metrics_computer.compute_all(image, result.compressed_image)
+            metrics = self.metrics_computer.compute_all(image, result.image)
             
             # Compute throughput
             megapixels = original_pixels / 1e6
@@ -453,7 +451,7 @@ class BenchmarkRunner:
                 actual_compression_ratio=actual_ratio,
                 pixels_removed=pixels_removed,
                 pixels_removed_percent=pixels_removed_pct,
-                energy_function_calls=result.iterations,
+                energy_function_calls=1,  # Estimate
                 ssim=metrics["ssim"],
                 psnr=metrics["psnr"],
                 lpips=metrics.get("lpips", -1),
@@ -494,7 +492,7 @@ class BenchmarkRunner:
             GradientEnergyFunction(),
             SaliencyEnergyFunction(),
             DeepEnergyFunction(model_name="vgg16"),
-            HybridEnergyFunction(model_name="vgg16"),
+            HybridEnergyFunction(),
         ]
         
         all_results = []
